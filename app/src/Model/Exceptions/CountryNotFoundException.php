@@ -16,4 +16,5 @@ class CountryNotFoundException extends Exception
             previous: $previous,
         );
     }
+    
 }
