@@ -89,47 +89,47 @@ class CountryScenarios
         $this->repository->save($country);
     }
 
-    // edit - редактирование страны по коду
-// вход: код редактируемой страны (не обновленный), объект обновленной страны
-// выход: -
-// исключения: InvalidCodeException, CountryNotFoundException, DuplicatedCodeException
-public function edit(string $code, Country $country): void
-{
-    // Валидация кода
-    if (!$this->isValidCode($code)) {
-        throw new InvalidCodeException($code, 'Code format is invalid. Expected 2-letter, 3-letter, or numeric code.');
-    }
+         // edit - редактирование страны по коду
+        // вход: код редактируемой страны (не обновленный), объект обновленной страны
+        // выход: -
+        // исключения: InvalidCodeException, CountryNotFoundException, DuplicatedCodeException
+        public function edit(string $code, Country $country): void
+        {
+            // Валидация кода
+            if (!$this->isValidCode($code)) {
+                throw new InvalidCodeException($code, 'Code format is invalid. Expected 2-letter, 3-letter, or numeric code.');
+            }
 
-    // Получим текущую страну по коду
-    $currentCountry = $this->repository->selectByCode($code);
-    if ($currentCountry === null) {
-        throw new CountryNotFoundException($code);
-    }
+            // Получим текущую страну по коду
+            $currentCountry = $this->repository->selectByCode($code);
+            if ($currentCountry === null) {
+                throw new CountryNotFoundException($code);
+            }
 
-    // Проверим, не меняются ли коды
-    if ($country->isoAlpha2 !== $currentCountry->isoAlpha2 ||
-        $country->isoAlpha3 !== $currentCountry->isoAlpha3 ||
-        $country->isoNumeric !== $currentCountry->isoNumeric) {
-        throw new InvalidCodeException($code, 'Country codes cannot be changed during update.');
-    }
+            // Проверим, не меняются ли коды
+            if ($country->isoAlpha2 !== $currentCountry->isoAlpha2 ||
+                $country->isoAlpha3 !== $currentCountry->isoAlpha3 ||
+                $country->isoNumeric !== $currentCountry->isoNumeric) {
+                throw new InvalidCodeException($code, 'Country codes cannot be changed during update.');
+            }
 
-    // Проверка валидности новых данных (наименования, население, площадь)
-    if (empty($country->shortName)) {
-        throw new InvalidCodeException('shortName', 'shortName cannot be empty.');
-    }
-    if (empty($country->fullName)) {
-        throw new InvalidCodeException('fullName', 'fullName cannot be empty.');
-    }
-    if ($country->population < 0) {
-        throw new InvalidCodeException('population', 'population cannot be negative.');
-    }
-    if ($country->square < 0) {
-        throw new InvalidCodeException('square', 'square cannot be negative.');
-    }
+            // Проверка валидности новых данных (наименования, население, площадь)
+            if (empty($country->shortName)) {
+                throw new InvalidCodeException('shortName', 'shortName cannot be empty.');
+            }
+            if (empty($country->fullName)) {
+                throw new InvalidCodeException('fullName', 'fullName cannot be empty.');
+            }
+            if ($country->population < 0) {
+                throw new InvalidCodeException('population', 'population cannot be negative.');
+            }
+            if ($country->square < 0) {
+                throw new InvalidCodeException('square', 'square cannot be negative.');
+            }
 
-    // Вызов метода хранилища для обновления
-    $this->repository->updateByCode($code, $country);
-}
+            // Вызов метода хранилища для обновления
+            $this->repository->updateByCode($code, $country);
+        }
 
         // delete - удаление страны по коду
         // вход: код удаляемой страны

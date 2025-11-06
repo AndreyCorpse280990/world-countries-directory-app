@@ -16,4 +16,4 @@ CREATE TABLE country_t (
     iso_numeric_f VARCHAR(3) NOT NULL UNIQUE, 
     population_f BIGINT NOT NULL,
     square_f BIGINT NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;пшц

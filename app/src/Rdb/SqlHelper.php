@@ -18,7 +18,7 @@ class SqlHelper
     public function openDbConnection(): mysqli
     {
         // Получить параметры подключения из переменных окружения $_ENV
-        $host = $_ENV['DB_HOST'] ?? 'localhost'; // Значение по умолчанию на случай, если переменная не задана
+        $host = $_ENV['DB_HOST'] ?? 'localhost'; 
         $port = (int) ($_ENV['DB_PORT'] ?? 3306);
         $user = $_ENV['DB_USERNAME'] ?? 'root';
         $password = $_ENV['DB_PASSWORD'] ?? 'root';
