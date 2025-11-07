@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Model\Country;
 
-#[Route('/api/country')] // Устанавливаем общий маршрут для всех методов в этом контроллере
+#[Route('/api/country')] 
 class CountryController extends AbstractController
 {
     public function __construct(
@@ -68,10 +68,6 @@ class CountryController extends AbstractController
             // Если выброшено DuplicatedCodeException, вернуть 409
             throw new \Symfony\Component\HttpKernel\Exception\ConflictHttpException($e->getMessage());
         } catch (\Exception $e) {
-            // Логируем общее исключение, если нужно
-            // error_log($e->getMessage());
-            // Любая другая ошибка (например, SQL ошибка из-за длины строки) -> 500
-            // Но можно добавить обработку конкретных SQL ошибок, если хочется быть точнее
             if ($e instanceof \mysqli_sql_exception) {
                 // Пример: если ошибка связана с длиной данных, можно вернуть 400
                 if (strpos($e->getMessage(), 'Data too long') !== false) {

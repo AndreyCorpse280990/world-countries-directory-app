@@ -10,54 +10,47 @@ use App\Rdb\SqlHelper;
 
 
 // CountryStorage - реализация интерфейса CountryRepository для работы с реляционной БД
-class CountryStorage implements CountryRepository // Класс имплементирует интерфейс CountryRepository
+class CountryStorage implements CountryRepository 
 {
 
-public function __construct(
-    private readonly SqlHelper $sqlHelper
-) {
-    $this->sqlHelper->pingDb(); 
-}
-
-   // selectAll - получение всех стран
-// вход: -
-// выход: список объектов Country
-// исключения: -
-public function selectAll(): array
-{
-    $connection = $this->sqlHelper->openDbConnection();
-    try {
-        $queryStr = 'SELECT short_name_f, full_name_f, iso_alpha2_f, iso_alpha3_f, iso_numeric_f, population_f, square_f FROM country_t ORDER BY id;';
-        $result = $connection->query($queryStr);
-
-        if (!$result) {
-            throw new \Exception("Database query failed: " . $connection->error);
-        }
-
-        $countries = [];
-        while ($row = $result->fetch_assoc()) {
-            $country = new Country(
-                shortName: $row['short_name_f'],
-                fullName: $row['full_name_f'],
-                isoAlpha2: $row['iso_alpha2_f'],
-                isoAlpha3: $row['iso_alpha3_f'],
-                isoNumeric: $row['iso_numeric_f'],
-                population: (int)$row['population_f'],
-                square: (float)$row['square_f']
-            );
-            $countries[] = $country;
-        }
-
-        return $countries;
-    } finally {
-        $connection->close();
+    public function __construct(
+        private readonly SqlHelper $sqlHelper
+    ) {
+        $this->sqlHelper->pingDb(); 
     }
-}
+
+    // selectAll - получение всех стран
+    public function selectAll(): array
+    {
+        $connection = $this->sqlHelper->openDbConnection();
+        try {
+            $queryStr = 'SELECT short_name_f, full_name_f, iso_alpha2_f, iso_alpha3_f, iso_numeric_f, population_f, square_f FROM country_t';
+            $stmt = $connection->prepare($queryStr);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $countries = [];
+            while ($row = $result->fetch_assoc()) {
+                // Создаём объект Country из строки результата
+                $countries[] = new \App\Model\Country(
+                    shortName: $row['short_name_f'],
+                    fullName: $row['full_name_f'],
+                    isoAlpha2: $row['iso_alpha2_f'],
+                    isoAlpha3: $row['iso_alpha3_f'],
+                    isoNumeric: $row['iso_numeric_f'],
+                    population: (int)$row['population_f'],
+                    square: (float)$row['square_f']
+                );
+            }
+            return $countries;
+        } finally {
+            if (isset($stmt)) {
+                $stmt->close();
+            }
+            $connection->close();
+        }
+    }
 
     // selectByCode - получить страну по коду (isoAlpha2, isoAlpha3 или isoNumeric)
-    // вход: код страны
-    // выход: объект извлеченной страны или null
-    // исключения: -
     public function selectByCode(string $code): ?Country
     {
         // Проверим, является ли код числовым (isoNumeric)
@@ -75,9 +68,6 @@ public function selectAll(): array
     }
 
     // save - сохранение страны в БД
-    // вход: объект страны
-    // выход: -
-    // исключения: DuplicatedCodeException
     public function save(Country $country): void
     {
         $connection = $this->sqlHelper->openDbConnection();
@@ -101,18 +91,17 @@ public function selectAll(): array
                 throw new \Exception("Prepare failed: " . $connection->error);
             }
 
-            // Создаём переменную для square, чтобы передать её в bind_param
             $squareInt = (int)$country->square;
 
             $stmt->bind_param(
-                'ssssiii', // s - строка, i - целое число
+                'ssssiii', 
                 $country->shortName,
                 $country->fullName,
                 $country->isoAlpha2,
                 $country->isoAlpha3,
                 $country->isoNumeric,
                 $country->population,
-                $squareInt // <-- Передаём переменную, а не выражение
+                $squareInt 
             );
 
             if (!$stmt->execute()) {
@@ -126,10 +115,8 @@ public function selectAll(): array
         }
     }
 
-        // deleteByCode - удаление страны по коду (isoAlpha2, isoAlpha3 или isoNumeric)
-    // вход: код удаляемой страны
-    // выход: -
-    // исключения: CountryNotFoundException
+    // deleteByCode - удаление страны по коду (isoAlpha2, isoAlpha3 или isoNumeric)
+
     public function deleteByCode(string $code): void
     {
         $connection = $this->sqlHelper->openDbConnection();
@@ -155,8 +142,6 @@ public function selectAll(): array
 
             // Проверим, был ли удалён хотя бы один ряд
             if ($stmt->affected_rows === 0) {
-                // Это маловероятно, если WHERE clause корректна и страна существовала
-                // Но на всякий случай бросим исключение
                 throw new CountryNotFoundException($code);
             }
         } finally {
@@ -168,97 +153,83 @@ public function selectAll(): array
     }
 
     // updateByCode - обновление данных страны по коду (isoAlpha2, isoAlpha3 или isoNumeric)
-// вход: код редактируемой страны (не обновленный), объект обновленной страны
-// выход: -
-// исключения: CountryNotFoundException, DuplicatedCodeException
-public function updateByCode(string $code, Country $country): void
-{
-    $connection = $this->sqlHelper->openDbConnection();
-    try {
-        // Проверим уникальность НОВЫХ кодов, но не для текущей редактируемой страны
-        // Получим старые коды текущей страны, чтобы исключить её из проверки дубликата
-        $existingCountry = $this->selectByCode($code);
-        if ($existingCountry === null) {
-            throw new CountryNotFoundException($code);
+
+    public function updateByCode(string $code, Country $country): void
+    {
+        $connection = $this->sqlHelper->openDbConnection();
+        try {
+            $existingCountry = $this->selectByCode($code);
+            if ($existingCountry === null) {
+                throw new CountryNotFoundException($code);
+            }
+
+            $oldIsoAlpha2 = $existingCountry->isoAlpha2;
+            $oldIsoAlpha3 = $existingCountry->isoAlpha3;
+            $oldIsoNumeric = $existingCountry->isoNumeric;
+
+            // Проверим, не совпадают ли новые коды с уже существующими, исключая текущую страну
+            $existingByNewAlpha2 = $this->selectByIsoAlpha2($country->isoAlpha2);
+            if ($existingByNewAlpha2 !== null && $existingByNewAlpha2->isoAlpha2 !== $oldIsoAlpha2) {
+                throw new DuplicatedCodeException($country->isoAlpha2);
+            }
+
+            $existingByNewAlpha3 = $this->selectByIsoAlpha3($country->isoAlpha3);
+            if ($existingByNewAlpha3 !== null && $existingByNewAlpha3->isoAlpha3 !== $oldIsoAlpha3) {
+                throw new DuplicatedCodeException($country->isoAlpha3);
+            }
+
+            $existingByNewNumeric = $this->selectByIsoNumeric($country->isoNumeric);
+            if ($existingByNewNumeric !== null && $existingByNewNumeric->isoNumeric !== $oldIsoNumeric) {
+                throw new DuplicatedCodeException($country->isoNumeric);
+            }
+
+            // Подготовить запрос UPDATE
+            $queryStr = 'UPDATE country_t
+                        SET short_name_f = ?, full_name_f = ?, population_f = ?, square_f = ?
+                        WHERE iso_alpha2_f = ? AND iso_alpha3_f = ? AND iso_numeric_f = ?';
+            $stmt = $connection->prepare($queryStr);
+            if (!$stmt) {
+                throw new \Exception("Prepare failed: " . $connection->error);
+            }
+
+            // Создадим переменные для всех значений, которые передаются в bind_param
+            $shortName = $country->shortName;
+            $fullName = $country->fullName;
+            $population = $country->population;
+            $squareInt = (int)$country->square; // Приводим к int и сохраняем в переменную
+            $whereIsoAlpha2 = $oldIsoAlpha2;
+            $whereIsoAlpha3 = $oldIsoAlpha3;
+            $whereIsoNumeric = $oldIsoNumeric;
+
+            // Теперь передаём переменные, а не выражения
+            $stmt->bind_param(
+                'ssiiiss', // s - строка, i - целое число
+                $shortName,       
+                $fullName,        
+                $population,      
+                $squareInt,       
+                $whereIsoAlpha2,  
+                $whereIsoAlpha3,  
+                $whereIsoNumeric  
+            );
+
+            if (!$stmt->execute()) {
+                throw new \Exception("Execute failed: " . $stmt->error);
+            }
+
+            // Проверим, был ли обновлён хотя бы один ряд
+            if ($stmt->affected_rows === 0) {
+            }
+        } finally {
+            if (isset($stmt)) {
+                $stmt->close();
+            }
+            $connection->close();
         }
-
-        $oldIsoAlpha2 = $existingCountry->isoAlpha2;
-        $oldIsoAlpha3 = $existingCountry->isoAlpha3;
-        $oldIsoNumeric = $existingCountry->isoNumeric;
-
-        // Проверим, не совпадают ли новые коды с уже существующими, исключая текущую страну
-        $existingByNewAlpha2 = $this->selectByIsoAlpha2($country->isoAlpha2);
-        if ($existingByNewAlpha2 !== null && $existingByNewAlpha2->isoAlpha2 !== $oldIsoAlpha2) {
-            throw new DuplicatedCodeException($country->isoAlpha2);
-        }
-
-        $existingByNewAlpha3 = $this->selectByIsoAlpha3($country->isoAlpha3);
-        if ($existingByNewAlpha3 !== null && $existingByNewAlpha3->isoAlpha3 !== $oldIsoAlpha3) {
-            throw new DuplicatedCodeException($country->isoAlpha3);
-        }
-
-        $existingByNewNumeric = $this->selectByIsoNumeric($country->isoNumeric);
-        if ($existingByNewNumeric !== null && $existingByNewNumeric->isoNumeric !== $oldIsoNumeric) {
-            throw new DuplicatedCodeException($country->isoNumeric);
-        }
-
-        // Подготовить запрос UPDATE
-        // Обновляем ВСЕ поля, кроме кодов
-        // ИСПОЛЬЗУЕМ СТАРЫЕ КОДЫ В WHERE CLAUSE, чтобы точно обновить нужную строку
-        $queryStr = 'UPDATE country_t
-                     SET short_name_f = ?, full_name_f = ?, population_f = ?, square_f = ?
-                     WHERE iso_alpha2_f = ? AND iso_alpha3_f = ? AND iso_numeric_f = ?';
-        $stmt = $connection->prepare($queryStr);
-        if (!$stmt) {
-            throw new \Exception("Prepare failed: " . $connection->error);
-        }
-
-        // Создадим переменные для всех значений, которые передаются в bind_param
-        $shortName = $country->shortName;
-        $fullName = $country->fullName;
-        $population = $country->population;
-        $squareInt = (int)$country->square; // Приводим к int и сохраняем в переменную
-        $whereIsoAlpha2 = $oldIsoAlpha2;
-        $whereIsoAlpha3 = $oldIsoAlpha3;
-        $whereIsoNumeric = $oldIsoNumeric;
-
-        // Теперь передаём переменные, а не выражения
-        $stmt->bind_param(
-            'ssiiiss', // s - строка, i - целое число
-            $shortName,       // Передаём переменную
-            $fullName,        // Передаём переменную
-            $population,      // Передаём переменную
-            $squareInt,       // Передаём переменную
-            $whereIsoAlpha2,  // Передаём переменную
-            $whereIsoAlpha3,  // Передаём переменную
-            $whereIsoNumeric  // Передаём переменную
-        );
-
-        if (!$stmt->execute()) {
-            throw new \Exception("Execute failed: " . $stmt->error);
-        }
-
-        // Проверим, был ли обновлён хотя бы один ряд
-        if ($stmt->affected_rows === 0) {
-            // Это может произойти, если WHERE clause не совпала ни с одной строкой
-            // (например, если строка была удалена между selectByCode и UPDATE)
-            // Но в нашей логике это маловероятно, если CountryScenarios проверил существование
-            // Можно бросить исключение или просто логировать
-            // throw new CountryNotFoundException($code); // Это может быть избыточно
-        }
-    } finally {
-        if (isset($stmt)) {
-            $stmt->close();
-        }
-        $connection->close();
     }
-}
 
 
     // selectByIsoAlpha2 - получить страну по isoAlpha2
-    // вход: код isoAlpha2
-    // выход: объект извлеченной страны или null
-    // исключения: -
     public function selectByIsoAlpha2(string $code): ?Country
     {
         $connection = $this->sqlHelper->openDbConnection();
@@ -294,9 +265,6 @@ public function updateByCode(string $code, Country $country): void
     }
 
     // selectByIsoAlpha3 - получить страну по isoAlpha3
-    // вход: код isoAlpha3
-    // выход: объект извлеченной страны или null
-    // исключения: -
     public function selectByIsoAlpha3(string $code): ?Country
     {
         $connection = $this->sqlHelper->openDbConnection();
@@ -333,9 +301,6 @@ public function updateByCode(string $code, Country $country): void
 
 
     // selectByIsoNumeric - получить страну по isoNumeric
-    // вход: код isoNumeric
-    // выход: объект извлеченной страны или null
-    // исключения: -
     public function selectByIsoNumeric(string $code): ?Country
     {
         $connection = $this->sqlHelper->openDbConnection();

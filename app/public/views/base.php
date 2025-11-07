@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title><?= htmlspecialchars($title ?? 'World Countries Directory') ?></title>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Подключение кастомного CSS -->
     <link rel="stylesheet" type="text/css" href="/css/style.css">
     <?= $stylesheets ?? '' ?>
 </head>
@@ -34,7 +32,7 @@
         </div>
     <?php endif; ?>
 
-    <?= $content ?? '' ?>
+    <?= $content ?? '' ?> 
 </div>
 
 <!-- Bootstrap JS -->

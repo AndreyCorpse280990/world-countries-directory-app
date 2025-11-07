@@ -19,63 +19,32 @@ class CountryPagesController extends AbstractController
     }
 
     // Обработчик для отображения списка всех стран
-    // ...
-    // ...
+// ...
     #[Route('', name: 'countries_list', methods: ['GET'])]
     public function list(): Response
     {
         $countries = $this->countryScenarios->getAll();
-        error_log("DEBUG: CountryPagesController::list() fetched " . count($countries) . " countries.");
         // Подготавливаем переменные для "шаблона"
         $title = 'Countries List';
         $content = '';
-        $flash_message = $flash_message ?? null; // Если используешь flash-сообщения
-        $flash_type = $flash_type ?? null;     // Если используешь flash-сообщения
+        $flash_message = $flash_message ?? null; 
+        $flash_type = $flash_type ?? null;     
 
-        // Буферизируем вывод из "шаблона"
         ob_start();
-        error_log("DEBUG: Including countries_list.php template.");
-        // Передаём переменные в "шаблон" через $GLOBALS
-        // Это позволяет избежать extract() внутри шаблона, что может быть более предсказуемо
         $template_vars = [
             'countries' => $countries,
             'title' => $title,
             'content' => $content,
-            'flash_message' => $flash_message ?? null, // Раскомментируй
-            'flash_type' => $flash_type ?? null,     // Раскомментируй
+            'flash_message' => $flash_message ?? null, 
+            'flash_type' => $flash_type ?? null,     
         ];
-        // extract($template_vars); // <-- УБРАТЬ extract
-        // Вместо этого, передаём переменные через $GLOBALS
-        foreach ($template_vars as $key => $value) {
-            $GLOBALS[$key] = $value;
-        }
-
-        include __DIR__ . '/../../public/views/countries_list.php'; // <--- ИСПОЛЬЗУЕМ ЧИСТЫЙ PHP-ШАБЛОН
-        error_log("DEBUG: After including countries_list.php template.");
-        $list_content = ob_get_clean(); // Получаем СОДЕРЖИМОЕ СПИСКА (таблицу)
-
-        // Теперь формируем ПОЛНУЮ страницу, включая базовый шаблон
-        ob_start();
-        // Подготовим переменные для base.php
-        $base_template_vars = [
-            'title' => $title,
-            'content' => $list_content, // Передаём сгенерированное содержимое списка
-            'flash_message' => $flash_message,
-            'flash_type' => $flash_type
-        ];
-        foreach ($base_template_vars as $key => $value) {
-            $GLOBALS[$key] = $value;
-        }
-
-        error_log("DEBUG: Including base.php template.");
-        include __DIR__ . '/../../public/views/base.php'; // <-- ВКЛЮЧАЕМ БАЗОВЫЙ ШАБЛОН СНАРУЖИ
-        error_log("DEBUG: After including base.php template.");
-        $page_content = ob_get_clean(); // Получаем ПОЛНУЮ HTML-страницу
+        extract($template_vars); 
+        include __DIR__ . '/../../public/views/countries_list.php'; 
+        $page_content = ob_get_clean(); 
 
         // Возвращаем Response с HTML-контентом
         return new Response(content: $page_content, headers: ['Content-Type' => 'text/html']);
-}
-
+    }
 
 
     // Обработчик для отображения формы добавления
@@ -84,8 +53,6 @@ class CountryPagesController extends AbstractController
 {
     $title = 'Add New Country';
     $action = 'add';
-    // Создай объект Country с *пустыми значениями* или используй null, если конструктор позволяет
-    // Но, т.к. все поля public и final, единственный способ создать объект - это передать все 7 значений
     $country = new \App\Model\Country(
         shortName: '',
         fullName: '',
@@ -105,7 +72,7 @@ class CountryPagesController extends AbstractController
         'error' => $error
     ];
     extract($template_vars);
-    include __DIR__ . '/../../public/views/countries_form.php'; // <- ИСПОЛЬЗУЕМ ЧИСТЫЙ PHP-ШАБЛОН
+    include __DIR__ . '/../../public/views/countries_form.php'; 
     $page_content = ob_get_clean();
 
     return new Response(content: $page_content, headers: ['Content-Type' => 'text/html']);
@@ -117,12 +84,7 @@ class CountryPagesController extends AbstractController
     {
         // Проверка CSRF токена (упрощено)
         $submittedToken = $request->request->get('_token');
-        // $expectedToken = ... (должен быть сгенерирован ранее и сохранён в сессии)
-        // if (!hash_equals($expectedToken, $submittedToken)) {
-        //     throw new \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException();
-        // }
 
-        // Получить данные из формы (POST)
         $data = $request->request->all();
 
         // Создать объект Country из данных формы
@@ -139,7 +101,6 @@ class CountryPagesController extends AbstractController
         try {
             // Вызвать метод модели для сохранения
             $this->countryScenarios->store($country);
-            // Установить flash-сообщение (упрощено)
             $flash_message = 'Country added successfully!';
             $flash_type = 'success';
 
@@ -147,7 +108,6 @@ class CountryPagesController extends AbstractController
             $countries = $this->countryScenarios->getAll();
             $title = 'Countries List';
             $content = '';
-            // $flash_message и $flash_type уже установлены выше
 
             ob_start();
             $template_vars = [
@@ -158,26 +118,25 @@ class CountryPagesController extends AbstractController
                 'flash_type' => $flash_type
             ];
             extract($template_vars);
-            include __DIR__ . '/../../public/views/countries_list.php'; // <--- ИСПРАВИЛ ПУТЬ: ../../public/views (было ../../../)
+            include __DIR__ . '/../../public/views/countries_list.php'; 
             $page_content = ob_get_clean();
 
             return new Response(content: $page_content, headers: ['Content-Type' => 'text/html']);
 
         } catch (\Exception $e) {
-            // Обработка ошибки (например, валидация, дубликат)
             $error = $e->getMessage();
             $title = 'Add New Country';
             $action = 'add';
 
             ob_start();
             $template_vars = [
-                'country' => $country, // Возвращаем введённые данные
+                'country' => $country, 
                 'action' => $action,
                 'title' => $title,
                 'error' => $error
             ];
             extract($template_vars);
-            include __DIR__ . '/../../public/views/countries_form.php'; // <--- ИСПРАВИЛ ПУТЬ: ../../public/views (было ../../../)
+            include __DIR__ . '/../../public/views/countries_form.php';
             $page_content = ob_get_clean();
 
             return new Response(content: $page_content, headers: ['Content-Type' => 'text/html']);
@@ -188,12 +147,14 @@ class CountryPagesController extends AbstractController
     #[Route('/{code}/edit', name: 'countries_edit_form', methods: ['GET'])]
     public function editForm(string $code): Response
     {
+        error_log("DEBUG: CountryPagesController::editForm() called with code: " . $code);
         try {
             // Получить страну по коду
             $country = $this->countryScenarios->get($code);
+            error_log("DEBUG: CountryPagesController::editForm() fetched country: " . json_encode($country));
             $title = "Edit Country: " . $country->shortName;
             $action = 'edit';
-            $originalCountry = $country; // Для шаблона
+            $originalCountry = $country; 
             $error = null;
 
             ob_start();
@@ -205,7 +166,7 @@ class CountryPagesController extends AbstractController
                 'error' => $error
             ];
             extract($template_vars);
-            include __DIR__ . '/../../public/views/countries_form.php'; // <--- ИСПРАВИЛ ПУТЬ: ../../public/views (было ../../../)
+            include __DIR__ . '/../../public/views/countries_form.php'; 
             $page_content = ob_get_clean();
 
             return new Response(content: $page_content, headers: ['Content-Type' => 'text/html']);
@@ -218,25 +179,21 @@ class CountryPagesController extends AbstractController
             throw $this->createNotFoundException('Invalid country code');
         }
     }
-
     // Обработчик для обработки отправки формы редактирования
     #[Route('/{code}/edit', name: 'countries_update', methods: ['POST'])]
     public function update(string $code, Request $request): Response
     {
-        // Проверка CSRF токена (упрощено)
         $submittedToken = $request->request->get('_token');
         // if (!hash_equals($expectedToken, $submittedToken)) {
         //     throw new \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException();
         // }
 
-        // Получить данные из формы (POST)
         $data = $request->request->all();
 
-        // Создать объект Country из данных формы
         $country = new \App\Model\Country(
             shortName: $data['shortName'],
             fullName: $data['fullName'],
-            isoAlpha2: $data['isoAlpha2'], // Эти коды не должны меняться, но мы их передаём для валидации в модели
+            isoAlpha2: $data['isoAlpha2'], 
             isoAlpha3: $data['isoAlpha3'],
             isoNumeric: $data['isoNumeric'],
             population: (int)$data['population'],
@@ -246,15 +203,12 @@ class CountryPagesController extends AbstractController
         try {
             // Вызвать метод модели для обновления
             $this->countryScenarios->edit($code, $country);
-            // Установить flash-сообщение
             $flash_message = 'Country updated successfully!';
             $flash_type = 'success';
 
-            // Показать список с сообщением
             $countries = $this->countryScenarios->getAll();
             $title = 'Countries List';
             $content = '';
-            // $flash_message и $flash_type уже установлены выше
 
             ob_start();
             $template_vars = [
@@ -265,7 +219,7 @@ class CountryPagesController extends AbstractController
                 'flash_type' => $flash_type
             ];
             extract($template_vars);
-            include __DIR__ . '/../../public/views/countries_list.php'; // <--- ИСПРАВИЛ ПУТЬ: ../../public/views (было ../../../)
+            include __DIR__ . '/../../public/views/countries_list.php'; 
             $page_content = ob_get_clean();
 
             return new Response(content: $page_content, headers: ['Content-Type' => 'text/html']);
@@ -277,7 +231,7 @@ class CountryPagesController extends AbstractController
         } catch (\Exception $e) {
             // Обработка других ошибок (валидация, дубликат)
             try {
-                $originalCountry = $this->countryScenarios->get($code); // Получить оригинальную страну снова
+                $originalCountry = $this->countryScenarios->get($code); 
             } catch (\App\Model\Exceptions\CountryNotFoundException $e) {
                  throw $this->createNotFoundException('Country not found');
             }
@@ -287,14 +241,14 @@ class CountryPagesController extends AbstractController
 
             ob_start();
             $template_vars = [
-                'country' => $country, // Возвращаем введённые данные
+                'country' => $country, 
                 'originalCountry' => $originalCountry,
                 'action' => $action,
                 'title' => $title,
                 'error' => $error
             ];
             extract($template_vars);
-            include __DIR__ . '/../../public/views/countries_form.php'; // <--- ИСПРАВИЛ ПУТЬ: ../../public/views (было ../../../)
+            include __DIR__ . '/../../public/views/countries_form.php'; 
             $page_content = ob_get_clean();
 
             return new Response(content: $page_content, headers: ['Content-Type' => 'text/html']);
@@ -302,18 +256,15 @@ class CountryPagesController extends AbstractController
     }
 
     // Обработчик для удаления страны
-    #[Route('/{code}/delete', name: 'countries_delete', methods: ['POST'])] // Лучше POST для безопасности
-    public function delete(string $code, Request $request): Response // <--- ДОБАВЬ Request $request
+    #[Route('/{code}/delete', name: 'countries_delete', methods: ['POST'])] 
+    public function delete(string $code, Request $request): Response 
     {
-        // Проверка CSRF токена (упрощено)
-        $submittedToken = $request->request->get('_token'); // <--- Тепер $request доступен
+        $submittedToken = $request->request->get('_token'); 
         // if (!hash_equals($expectedToken, $submittedToken)) {
         //     throw new \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException();
         // }
-
-        // Вызвать метод модели для удаления
         try {
-            $this->countryScenarios->delete($code); // Используем инъекцию $this->countryScenarios
+            $this->countryScenarios->delete($code); 
             $flash_message = 'Country deleted successfully!';
             $flash_type = 'success';
         } catch (\App\Model\Exceptions\CountryNotFoundException $e) {
@@ -329,8 +280,7 @@ class CountryPagesController extends AbstractController
         $countries = $this->countryScenarios->getAll();
         $title = 'Countries List';
         $content = '';
-        // $flash_message и $flash_type уже установлены выше
-
+        
         ob_start();
         $template_vars = [
             'countries' => $countries,
@@ -340,7 +290,7 @@ class CountryPagesController extends AbstractController
             'flash_type' => $flash_type
         ];
         extract($template_vars);
-        include __DIR__ . '/../../public/views/countries_list.php'; // <--- ИСПРАВИЛ ПУТЬ: ../../public/views (было ../../../)
+        include __DIR__ . '/../../public/views/countries_list.php';
         $page_content = ob_get_clean();
 
         return new Response(content: $page_content, headers: ['Content-Type' => 'text/html']);

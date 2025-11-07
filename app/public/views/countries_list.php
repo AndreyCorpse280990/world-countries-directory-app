@@ -1,18 +1,6 @@
 <?php
-// app/public/views/countries_list.php
-// Этот файл генерирует *только* HTML-код для тела страницы (списка стран).
-// Он НЕ должен включать base.php напрямую.
-// Переменные $countries, $title, $flash_message, $flash_type
-// должны быть доступны через extract() или $GLOBALS в CountryPagesController.php до вызова include.
 
-// Проверим, определена ли переменная $countries и является ли она массивом
-if (!isset($countries) || !is_array($countries)) {
-    error_log("ERROR: Variable \$countries is not defined or is not an array in countries_list.php");
-    echo '<div class="alert alert-danger">An error occurred while loading the country list (data is not available).</div>';
-    return; // ВАЖНО: завершаем выполнение *этого* файла, а не всей страницы
-}
-
-// Начинаем буферизацию только для *содержимого* списка
+// Этот файл генерирует HTML-страницу списка стран
 ob_start();
 ?>
 
@@ -75,8 +63,19 @@ ob_start();
 <a href="/countries/new" class="btn btn-primary">Add New Country</a>
 
 <?php
-// Завершаем буферизацию и сохраняем *только* содержимое списка
 $list_content = ob_get_clean();
 
-echo $list_content;
+
+$content = $list_content;
+
+
+$template_vars_for_base = [
+    'title' => $title ?? 'Countries List',
+    'content' => $content,
+    'flash_message' => $flash_message ?? null,
+    'flash_type' => $flash_type ?? null
+];
+extract($template_vars_for_base); 
+include __DIR__ . '/base.php';
+// include base.php сам выведет HTML
 ?>

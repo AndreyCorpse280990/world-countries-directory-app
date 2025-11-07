@@ -37,8 +37,6 @@ class SqlHelper
         if ($connection->connect_errno) {
             throw new RuntimeException(message: "Failed to connect to MySQL: " . $connection->connect_error);
         }
-
-        // Если всё ок - вернуть соединение с БД
         return $connection;
     }
 
@@ -47,7 +45,6 @@ class SqlHelper
     {
         // Открыть и закрыть соединение с БД
         $connection = $this->openDbConnection();
-        // Не используем встроенный ping, а просто открываем и закрываем
         $connection->close();
     }
 }

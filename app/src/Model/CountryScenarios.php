@@ -10,7 +10,7 @@ use App\Model\Exceptions\DuplicatedCodeException;
 class CountryScenarios
 {
     public function __construct(
-        private readonly CountryRepository $repository // Инъекция зависимости через интерфейс CountryRepository
+        private readonly CountryRepository $repository 
     ) {
     }
 
@@ -20,13 +20,10 @@ class CountryScenarios
     // исключения: -
     public function getAll(): array
     {
-        return $this->repository->selectAll(); // Вызов метода из хранилища
+        return $this->repository->selectAll();
     }
 
     // get - получение страны по коду
-    // вход: код страны (двухбуквенный, трехбуквенный или числовой)
-    // выход: объект извлеченной страны
-    // исключения: InvalidCodeException, CountryNotFoundException
     public function get(string $code): Country
     {
         // Валидация кода
@@ -46,16 +43,13 @@ class CountryScenarios
         return $country;
     }
 
-    // isValidCode - проверка корректности кода страны (2 буквы, 3 буквы, 3 цифры)
+    // isValidCode - проверка корректности кода страны
     private function isValidCode(string $code): bool {
         // Проверяет, состоит ли строка из 2 заглавных букв, 3 заглавных букв или 3 цифр
         return preg_match('/^[A-Z]{2}$/', $code) || preg_match('/^[A-Z]{3}$/', $code) || preg_match('/^[0-9]{3}$/', $code);
     }
 
     // store - сохранение новой страны
-    // вход: объект страны
-    // выход: -
-    // исключения: InvalidCodeException, DuplicatedCodeException
     public function store(Country $country): void
     {
         // Валидация кодов
@@ -85,14 +79,11 @@ class CountryScenarios
             throw new InvalidCodeException('square', 'square cannot be negative.');
         }
 
-        // Сохранение в хранилище (там проверяется уникальность и выбрасывается DuplicatedCodeException)
+        // Сохранение в хранилище 
         $this->repository->save($country);
     }
 
          // edit - редактирование страны по коду
-        // вход: код редактируемой страны (не обновленный), объект обновленной страны
-        // выход: -
-        // исключения: InvalidCodeException, CountryNotFoundException, DuplicatedCodeException
         public function edit(string $code, Country $country): void
         {
             // Валидация кода
@@ -132,9 +123,6 @@ class CountryScenarios
         }
 
         // delete - удаление страны по коду
-        // вход: код удаляемой страны
-        // выход: -
-        // исключения: InvalidCodeException, CountryNotFoundException
         public function delete(string $code): void
         {
             // Валидация кода

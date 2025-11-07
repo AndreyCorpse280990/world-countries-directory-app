@@ -1,10 +1,7 @@
 <?php
 // app/public/views/countries_form.php
-// Этот файл генерирует *только* HTML-код для формы (добавления/редактирования).
-// Он НЕ должен содержать namespace, use, class, #[Route] или другие конструкции, связанные с контроллером.
-// Все переменные ($country, $title, $action, $error, $originalCountry) должны быть доступны через extract() в CountryPagesController.php.
-
-ob_start(); // Начинаем буферизацию только для *содержимого* формы
+// Этот файл генерирует HTML-страницу формы добавления/редактирования
+ob_start();
 ?>
 
 <h1><?= htmlspecialchars($title) ?></h1>
@@ -55,9 +52,16 @@ ob_start(); // Начинаем буферизацию только для *со
 </form>
 
 <?php
-// Завершаем буферизацию и сохраняем *только* содержимое формы
 $form_content = ob_get_clean();
 
-// Этот файл НЕ должен включать base.php. base.php включается в CountryPagesController.php.
-// Мы просто генерируем $form_content и передаём его обратно в контроллер.
+$content = $form_content;
+
+$template_vars_for_base = [
+    'title' => $title ?? 'Country Form',
+    'content' => $content,
+    'flash_message' => $flash_message ?? null,
+    'flash_type' => $flash_type ?? null
+];
+extract($template_vars_for_base); 
+include __DIR__ . '/base.php'; 
 ?>
