@@ -6,7 +6,6 @@ USE world_countries_db;
 
 DROP TABLE IF EXISTS country_t;
 
--- Создадим таблицу country_t
 CREATE TABLE country_t (
     id INT AUTO_INCREMENT PRIMARY KEY,
     short_name_f VARCHAR(255) NOT NULL,

@@ -10,7 +10,7 @@ use Symfony\Component\Routing\Annotation\Route;
 // Удали: use Twig\Environment as TwigEnvironment;
 
 // CountryPagesController - контроллер для работы со странами через HTML-страницы (MVC)
-#[Route('/countries')] // Общий префикс для всех маршрутов в этом контроллере
+#[Route('/countries')]
 class CountryPagesController extends AbstractController
 {
     public function __construct(

@@ -116,7 +116,6 @@ class CountryStorage implements CountryRepository
     }
 
     // deleteByCode - удаление страны по коду (isoAlpha2, isoAlpha3 или isoNumeric)
-
     public function deleteByCode(string $code): void
     {
         $connection = $this->sqlHelper->openDbConnection();
@@ -153,7 +152,6 @@ class CountryStorage implements CountryRepository
     }
 
     // updateByCode - обновление данных страны по коду (isoAlpha2, isoAlpha3 или isoNumeric)
-
     public function updateByCode(string $code, Country $country): void
     {
         $connection = $this->sqlHelper->openDbConnection();

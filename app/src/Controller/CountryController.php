@@ -38,7 +38,6 @@ class CountryController extends AbstractController
         try {
             // Получить JSON из тела запроса
             $data = json_decode($request->getContent(), true);
-
             // Проверка на null, если тело не JSON или пустое
             if (json_last_error() !== JSON_ERROR_NONE || $data === null) {
                 throw new \Symfony\Component\HttpKernel\Exception\BadRequestHttpException('Invalid JSON in request body');

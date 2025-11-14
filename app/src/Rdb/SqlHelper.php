@@ -19,7 +19,7 @@ class SqlHelper
     {
         // Получить параметры подключения из переменных окружения $_ENV
         $host = $_ENV['DB_HOST'] ?? 'localhost'; 
-        $port = (int) ($_ENV['DB_PORT'] ?? 3306);
+        $port = (int) ($_ENV['DB_PORT'] ?? 3307);
         $user = $_ENV['DB_USERNAME'] ?? 'root';
         $password = $_ENV['DB_PASSWORD'] ?? 'root';
         $database = $_ENV['DB_NAME'] ?? 'world_countries_db';
